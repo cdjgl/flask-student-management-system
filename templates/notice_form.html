@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h5 class="m-0 font-weight-bold text-primary">{{ title }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ action_url }}">
+                <div class="mb-3">
+                    <label for="title" class="form-label">标题 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ notice.title if notice else '' }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="content" class="form-label">内容 <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="content" name="content" rows="8" required>{{ notice.content if notice else '' }}</textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="priority" class="form-label">优先级</label>
+                    <select class="form-control" id="priority" name="priority">
+                        <option value="normal" {% if not notice or notice.priority == 'normal' %}selected{% endif %}>普通</option>
+                        <option value="important" {% if notice and notice.priority == 'important' %}selected{% endif %}>重要</option>
+                        <option value="urgent" {% if notice and notice.priority == 'urgent' %}selected{% endif %}>紧急</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">发布人</label>
+                    <input type="text" class="form-control" value="{{ session.get('username', '') }}" readonly>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">提交</button>
+                <a href="{{ url_for('notices') }}" class="btn btn-secondary ms-2">取消</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

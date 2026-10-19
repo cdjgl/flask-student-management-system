@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}统计分析 - 学生管理系统{% endblock %}
+
+{% block content %}
+<div class="p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">
+            <i class="bi bi-bar-chart me-2"></i>统计分析
+        </h2>
+        <a href="{{ url_for('export_statistics') }}" class="btn btn-success">
+            <i class="bi bi-file-earmark-excel me-1"></i>导出报表
+        </a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card h-100 border-0 bg-gradient-blue">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">学生总数</p>
+                            <h3 class="fw-bold mb-0">{{ student_count }}</h3>
+                        </div>
+                        <div class="stat-icon bg-blue-100">
+                            <i class="bi bi-people-fill fs-2 text-blue"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card h-100 border-0 bg-gradient-green">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">课程总数</p>
+                            <h3 class="fw-bold mb-0">{{ course_count }}</h3>
+                        </div>
+                        <div class="stat-icon bg-green-100">
+                            <i class="bi bi-book-fill fs-2 text-green"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card h-100 border-0 bg-gradient-orange">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">宿舍信息数</p>
+                            <h3 class="fw-bold mb-0">{{ dormitory_count }}</h3>
+                        </div>
+                        <div class="stat-icon bg-orange-100">
+                            <i class="bi bi-house-fill fs-2 text-orange"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card h-100 border-0 bg-gradient-red">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">竞赛获奖数</p>
+                            <h3 class="fw-bold mb-0">{{ competition_count }}</h3>
+                        </div>
+                        <div class="stat-icon bg-red-100">
+                            <i class="bi bi-trophy-fill fs-2 text-red"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-gender-ambiguous me-2"></i>性别分布</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>性别</th>
+                                    <th>人数</th>
+                                    <th>占比</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in gender_distribution %}
+                                <tr>
+                                    <td>
+                                        {% if item.gender == '男' %}
+                                        <span class="badge bg-primary">{{ item.gender }}</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">{{ item.gender }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.count }}</td>
+                                    <td>{{ item.percentage }}%</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">暂无数据</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-graph-up me-2"></i>成绩分布</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>分数段</th>
+                                    <th>课程数</th>
+                                    <th>占比</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in score_ranges %}
+                                <tr>
+                                    <td>
+                                        {% if '不及格' in item.range %}
+                                        <span class="badge bg-danger">{{ item.range }}</span>
+                                        {% elif '及格' in item.range %}
+                                        <span class="badge bg-warning text-dark">{{ item.range }}</span>
+                                        {% elif '中等' in item.range %}
+                                        <span class="badge bg-info">{{ item.range }}</span>
+                                        {% elif '良好' in item.range %}
+                                        <span class="badge bg-primary">{{ item.range }}</span>
+                                        {% else %}
+                                        <span class="badge bg-success">{{ item.range }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.count }}</td>
+                                    <td>{{ item.percentage }}%</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">暂无数据</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-steps me-2"></i>课程统计（按平均分）</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>排名</th>
+                                    <th>课程名称</th>
+                                    <th>平均分</th>
+                                    <th>最高分</th>
+                                    <th>最低分</th>
+                                    <th>及格率</th>
+                                    <th>选课人数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if course_list %}
+                                    {% for course in course_list %}
+                                    <tr>
+                                        <td>
+                                            {% if loop.index == 1 %}
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-trophy me-1"></i>1</span>
+                                            {% elif loop.index == 2 %}
+                                            <span class="badge bg-secondary"><i class="bi bi-trophy me-1"></i>2</span>
+                                            {% elif loop.index == 3 %}
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-trophy me-1"></i>3</span>
+                                            {% else %}
+                                            <span class="badge bg-light text-dark">{{ loop.index }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="fw-medium">{{ course.name }}</td>
+                                        <td>
+                                            {% if course.avg_score >= 90 %}
+                                            <span class="text-success fw-bold">{{ course.avg_score }}</span>
+                                            {% elif course.avg_score >= 80 %}
+                                            <span class="text-primary fw-bold">{{ course.avg_score }}</span>
+                                            {% elif course.avg_score >= 60 %}
+                                            <span class="text-warning fw-bold">{{ course.avg_score }}</span>
+                                            {% else %}
+                                            <span class="text-danger fw-bold">{{ course.avg_score }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ course.max_score }}</td>
+                                        <td>{{ course.min_score }}</td>
+                                        <td>{{ course.pass_rate }}%</td>
+                                        <td>{{ course.student_count }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+                                        暂无课程数据
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 环境与密钥（绝不提交）
+.env
+
+# 运行时数据与产物
+data/
+data_backup_*/
+backups/
+exports/
+*.zip
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# AI 工具目录
+.trae/

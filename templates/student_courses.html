@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.name }}的课程 - 学生管理系统{% endblock %}
+
+{% block content %}
+<div class="p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="{{ url_for('students') }}">学生管理</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ student.name }}的课程</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold">
+                <i class="bi bi-book me-2"></i>{{ student.name }}的课程管理
+            </h2>
+            <p class="text-muted mb-0">学号：{{ student.student_id }} | 学院：{{ student.college or '-' }} | 班级：{{ student.class or '-' }}</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                <i class="bi bi-plus-lg me-1"></i>添加课程
+            </button>
+            <a href="{{ url_for('students') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>返回
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>课程名称</th>
+                            <th>学分</th>
+                            <th>成绩</th>
+                            <th>绩点</th>
+                            <th>学分绩点</th>
+                            <th>课程类型</th>
+                            <th>课程性质</th>
+                            <th>学期</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if student.courses %}
+                            {% for course in student.courses %}
+                            <tr>
+                                <td class="fw-medium">{{ course.course_name }}</td>
+                                <td>{{ course.credit }}</td>
+                                <td>
+                                    {% if course.score >= 90 %}
+                                    <span class="badge bg-success">{{ course.score }}</span>
+                                    {% elif course.score >= 80 %}
+                                    <span class="badge bg-primary">{{ course.score }}</span>
+                                    {% elif course.score >= 60 %}
+                                    <span class="badge bg-warning text-dark">{{ course.score }}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{{ course.score }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ course.gpa }}</td>
+                                <td>{{ course.credit_gpa }}</td>
+                                <td>{{ course.course_type }}</td>
+                                <td>{{ course.course_nature }}</td>
+                                <td>{{ course.semester }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editCourseModal{{ loop.index0 }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteCourseModal{{ loop.index0 }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+                                暂无课程数据
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-0">
+            <small class="text-muted">共 {{ student.courses|length }} 门课程</small>
+            {% if student.courses %}
+            {% set total_credit = student.courses | sum(attribute='credit') %}
+            {% set total_credit_gpa = student.courses | sum(attribute='credit_gpa') %}
+            {% set avg_gpa = total_credit_gpa / total_credit if total_credit > 0 else 0 %}
+            <small class="ms-4">总学分：{{ total_credit }} | 平均绩点：{{ '%.2f'|format(avg_gpa) }}</small>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addCourseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_course', student_id=student.student_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-book-plus me-2"></i>添加课程</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">课程名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="course_name" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">学分 <span class="text-danger">*</span></label>
+                            <input type="number" step="0.5" class="form-control" name="credit" required min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">成绩 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="score" required min="0" max="100">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">课程类型</label>
+                        <select class="form-select" name="course_type">
+                            <option value="专业核心课" selected>专业核心课</option>
+                            <option value="通识课">通识课</option>
+                            <option value="选修课">选修课</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">课程性质</label>
+                        <select class="form-select" name="course_nature">
+                            <option value="必修" selected>必修</option>
+                            <option value="选修">选修</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">学期</label>
+                        <select class="form-select" name="semester">
+                            <option value="2024-2025第一学期" selected>2024-2025第一学期</option>
+                            <option value="2024-2025第二学期">2024-2025第二学期</option>
+                            <option value="2023-2024第一学期">2023-2024第一学期</option>
+                            <option value="2023-2024第二学期">2023-2024第二学期</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for course in student.courses %}
+<div class="modal fade" id="editCourseModal{{ loop.index0 }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('edit_course', student_id=student.student_id, course_index=loop.index0) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>编辑课程</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">课程名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="course_name" value="{{ course.course_name }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">学分 <span class="text-danger">*</span></label>
+                            <input type="number" step="0.5" class="form-control" name="credit" value="{{ course.credit }}" required min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">成绩 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="score" value="{{ course.score }}" required min="0" max="100">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">课程类型</label>
+                        <select class="form-select" name="course_type">
+                            <option value="专业核心课" {% if course.course_type == '专业核心课' %}selected{% endif %}>专业核心课</option>
+                            <option value="通识课" {% if course.course_type == '通识课' %}selected{% endif %}>通识课</option>
+                            <option value="选修课" {% if course.course_type == '选修课' %}selected{% endif %}>选修课</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">课程性质</label>
+                        <select class="form-select" name="course_nature">
+                            <option value="必修" {% if course.course_nature == '必修' %}selected{% endif %}>必修</option>
+                            <option value="选修" {% if course.course_nature == '选修' %}selected{% endif %}>选修</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">学期</label>
+                        <select class="form-select" name="semester">
+                            <option value="2024-2025第一学期" {% if course.semester == '2024-2025第一学期' %}selected{% endif %}>2024-2025第一学期</option>
+                            <option value="2024-2025第二学期" {% if course.semester == '2024-2025第二学期' %}selected{% endif %}>2024-2025第二学期</option>
+                            <option value="2023-2024第一学期" {% if course.semester == '2023-2024第一学期' %}selected{% endif %}>2023-2024第一学期</option>
+                            <option value="2023-2024第二学期" {% if course.semester == '2023-2024第二学期' %}selected{% endif %}>2023-2024第二学期</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteCourseModal{{ loop.index0 }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('delete_course', student_id=student.student_id, course_index=loop.index0) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除课程 <strong>{{ course.course_name }}</strong> 吗？</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

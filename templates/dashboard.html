@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}仪表板 - 学生管理系统{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>您好，{{ username }}</h1>
+                <p>今天是 {{ current_time }}</p>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-num">{{ student_count }}</span>
+                    <span class="stat-text">学生</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-num">{{ course_count }}</span>
+                    <span class="stat-text">课程</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-num">{{ dormitory_count }}</span>
+                    <span class="stat-text">宿舍</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-section">
+        <div class="stat-card gradient-blue">
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">学生总数</span>
+                <span class="stat-value">{{ student_count }}</span>
+            </div>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up-right"></i>
+                <span>12%</span>
+            </div>
+        </div>
+
+        <div class="stat-card gradient-green">
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-book-open"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">课程总数</span>
+                <span class="stat-value">{{ course_count }}</span>
+            </div>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up-right"></i>
+                <span>8%</span>
+            </div>
+        </div>
+
+        <div class="stat-card gradient-purple">
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-building"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">宿舍信息</span>
+                <span class="stat-value">{{ dormitory_count }}</span>
+            </div>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up-right"></i>
+                <span>5%</span>
+            </div>
+        </div>
+
+        <div class="stat-card gradient-orange">
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-trophy"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">竞赛获奖</span>
+                <span class="stat-value">{{ competition_count }}</span>
+            </div>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up-right"></i>
+                <span>23%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions-section">
+        <h2 class="section-title">快捷操作</h2>
+        <div class="actions-grid">
+            <a href="{{ url_for('students') }}" class="action-card">
+                <div class="action-icon bg-blue">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+                <span class="action-text">添加学生</span>
+            </a>
+            <a href="{{ url_for('dormitories') }}" class="action-card">
+                <div class="action-icon bg-green">
+                    <i class="bi bi-house-add"></i>
+                </div>
+                <span class="action-text">添加宿舍</span>
+            </a>
+            <a href="{{ url_for('competitions') }}" class="action-card">
+                <div class="action-icon bg-orange">
+                    <i class="bi bi-trophy"></i>
+                </div>
+                <span class="action-text">添加竞赛</span>
+            </a>
+            <a href="{{ url_for('notices') }}" class="action-card">
+                <div class="action-icon bg-purple">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <span class="action-text">发布公告</span>
+            </a>
+            <a href="{{ url_for('classes') }}" class="action-card">
+                <div class="action-icon bg-cyan">
+                    <i class="bi bi-building"></i>
+                </div>
+                <span class="action-text">班级管理</span>
+            </a>
+            <a href="{{ url_for('grade_warning') }}" class="action-card">
+                <div class="action-icon bg-red">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <span class="action-text">成绩预警</span>
+            </a>
+            <a href="{{ url_for('statistics') }}" class="action-card">
+                <div class="action-icon bg-indigo">
+                    <i class="bi bi-bar-chart"></i>
+                </div>
+                <span class="action-text">统计分析</span>
+            </a>
+            <a href="{{ url_for('backup') }}" class="action-card">
+                <div class="action-icon bg-pink">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <span class="action-text">数据备份</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

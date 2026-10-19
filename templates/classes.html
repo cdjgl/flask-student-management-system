@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}班级管理 - 学生管理系统{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+    <div class="page-header">
+        <h2>
+            <i class="bi bi-people"></i> 班级管理
+        </h2>
+        <div>
+            <button class="btn blue" data-bs-toggle="modal" data-bs-target="#addClassModal">
+                <i class="bi bi-plus-lg me-1"></i>添加班级
+            </button>
+            <a href="{{ url_for('export_classes', college=selected_college, search_name=selected_search_name, advisor=selected_advisor) }}" class="btn green">
+                <i class="bi bi-file-earmark-excel me-1"></i>导出Excel
+            </a>
+        </div>
+    </div>
+
+    {% if request.args.get('error') %}
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ request.args.get('error') }}
+    </div>
+    {% endif %}
+
+    <div class="filter-bar">
+        <form method="GET">
+            <div class="filter-item">
+                <select class="form-select" name="college">
+                    <option value="">全部学院</option>
+                    {% for college in colleges %}
+                    <option value="{{ college }}" {% if selected_college == college %}selected{% endif %}>{{ college }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <input type="text" class="form-control" name="search_name" placeholder="班级名称搜索" value="{{ selected_search_name }}">
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="advisor">
+                    <option value="">全部辅导员</option>
+                    {% for advisor in advisors %}
+                    <option value="{{ advisor }}" {% if selected_advisor == advisor %}selected{% endif %}>{{ advisor }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <button type="submit" class="btn blue">
+                    <i class="bi bi-search me-1"></i>搜索
+                </button>
+                <a href="{{ url_for('classes') }}" class="btn gray">
+                    <i class="bi bi-x-lg me-1"></i>重置
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>班级ID</th>
+                            <th>二级学院</th>
+                            <th>班级名称</th>
+                            <th>辅导员</th>
+                            <th>学生人数</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if classes %}
+                            {% for cls in classes %}
+                            <tr>
+                                <td class="fw-medium">{{ cls.class_id }}</td>
+                                <td>{{ cls.college }}</td>
+                                <td><span class="badge primary">{{ cls.class_name }}</span></td>
+                                <td>{{ cls.advisor or '-' }}</td>
+                                <td><span class="badge primary">{{ cls.student_count or 0 }}</span></td>
+                                <td>{{ cls.created_at }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editClassModal{{ cls.class_id }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteClassModal{{ cls.class_id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+                                暂无班级数据
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-header border-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">共 {{ total }} 条记录</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                            <a class="page-link" href="?page={{ current_page - 1 }}&college={{ selected_college }}&search_name={{ selected_search_name }}&advisor={{ selected_advisor }}">上一页</a>
+                        </li>
+                        {% for page in pages %}
+                        {% if page == '...' %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item {% if page == current_page %}active{% endif %}">
+                            <a class="page-link" href="?page={{ page }}&college={{ selected_college }}&search_name={{ selected_search_name }}&advisor={{ selected_advisor }}">{{ page }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                            <a class="page-link" href="?page={{ current_page + 1 }}&college={{ selected_college }}&search_name={{ selected_search_name }}&advisor={{ selected_advisor }}">下一页</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addClassModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_class') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>添加班级</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">二级学院 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="college" required placeholder="例如：计算机学院">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">班级名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="class_name" required placeholder="例如：计科2401">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">辅导员</label>
+                        <input type="text" class="form-control" name="advisor" placeholder="例如：张老师">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn blue">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for cls in classes %}
+<div class="modal fade" id="editClassModal{{ cls.class_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('edit_class', class_id=cls.class_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>编辑班级</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">班级ID</label>
+                        <input type="text" class="form-control" value="{{ cls.class_id }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">二级学院 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="college" value="{{ cls.college }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">班级名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="class_name" value="{{ cls.class_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">辅导员</label>
+                        <input type="text" class="form-control" name="advisor" value="{{ cls.advisor or '' }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn blue">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteClassModal{{ cls.class_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('delete_class', class_id=cls.class_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除班级 <strong>{{ cls.class_name }}</strong> 吗？</p>
+                    {% if cls.student_count and cls.student_count > 0 %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-circle-fill"></i> 该班级还有 {{ cls.student_count }} 名学生，无法删除
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn danger" {% if cls.student_count and cls.student_count > 0 %}disabled{% endif %}>删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

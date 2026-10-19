@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}学生管理 - 学生管理系统{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+    <div class="page-header">
+        <h2>
+            <i class="bi bi-people me-2"></i>学生管理
+        </h2>
+        <div>
+            <button class="btn blue" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                <i class="bi bi-plus-lg me-1"></i>添加学生
+            </button>
+            <a href="{{ url_for('export_students', search=search, college=selected_college, class=selected_class, gender=selected_gender) }}" class="btn green">
+                <i class="bi bi-file-earmark-excel me-1"></i>导出Excel
+            </a>
+        </div>
+    </div>
+
+    {% if request.args.get('error') %}
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ request.args.get('error') }}
+    </div>
+    {% endif %}
+
+    <div class="filter-bar">
+        <form method="GET">
+            <div class="filter-item">
+                <input type="text" class="form-control" name="search" placeholder="搜索学号或姓名" value="{{ search }}">
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="college">
+                    <option value="">全部学院</option>
+                    {% for college in colleges %}
+                    <option value="{{ college }}" {% if selected_college == college %}selected{% endif %}>{{ college }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="class">
+                    <option value="">全部班级</option>
+                    {% for class_name in classes %}
+                    <option value="{{ class_name }}" {% if selected_class == class_name %}selected{% endif %}>{{ class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="gender">
+                    <option value="">全部性别</option>
+                    <option value="男" {% if selected_gender == '男' %}selected{% endif %}>男</option>
+                    <option value="女" {% if selected_gender == '女' %}selected{% endif %}>女</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <button type="submit" class="btn blue">
+                    <i class="bi bi-search me-1"></i>搜索
+                </button>
+                <a href="{{ url_for('students') }}" class="btn gray">
+                    <i class="bi bi-x-lg me-1"></i>重置
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>二级学院</th>
+                            <th>班级</th>
+                            <th>课程数</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if students %}
+                            {% for student in students %}
+                            <tr>
+                                <td class="fw-medium">{{ student.student_id }}</td>
+                                <td>{{ student.name }}</td>
+                                <td>
+                                    {% if student.gender == '男' %}
+                                    <span class="badge primary">{{ student.gender }}</span>
+                                    {% else %}
+                                    <span class="badge warning">{{ student.gender }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ student.college or '-' }}</td>
+                                <td>{{ student.class or '-' }}</td>
+                                <td>
+                                    <span class="badge primary">{{ student.courses|length }}</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editStudentModal{{ student.student_id }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <a href="{{ url_for('student_courses', student_id=student.student_id) }}" class="btn btn-sm btn-outline-info me-1">
+                                        <i class="bi bi-book"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteStudentModal{{ student.student_id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+                                暂无学生数据
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-header border-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">共 {{ total }} 条记录</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                            <a class="page-link" href="?page={{ current_page - 1 }}&search={{ search }}&college={{ selected_college }}&class={{ selected_class }}&gender={{ selected_gender }}">上一页</a>
+                        </li>
+                        {% for p in pages %}
+                        {% if p == '...' %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item {% if p == current_page %}active{% endif %}">
+                            <a class="page-link" href="?page={{ p }}&search={{ search }}&college={{ selected_college }}&class={{ selected_class }}&gender={{ selected_gender }}">{{ p }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                            <a class="page-link" href="?page={{ current_page + 1 }}&search={{ search }}&college={{ selected_college }}&class={{ selected_class }}&gender={{ selected_gender }}">下一页</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_student') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>添加学生</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">学号 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="student_id" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">性别</label>
+                        <select class="form-select" name="gender">
+                            <option value="男" selected>男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">二级学院</label>
+                        <input type="text" class="form-control" name="college">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">班级</label>
+                        <input type="text" class="form-control" name="class">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn blue">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for student in students %}
+<div class="modal fade" id="editStudentModal{{ student.student_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('edit_student', student_id=student.student_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>编辑学生</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">学号</label>
+                        <input type="text" class="form-control" value="{{ student.student_id }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" value="{{ student.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">性别</label>
+                        <select class="form-select" name="gender">
+                            <option value="男" {% if student.gender == '男' %}selected{% endif %}>男</option>
+                            <option value="女" {% if student.gender == '女' %}selected{% endif %}>女</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">二级学院</label>
+                        <input type="text" class="form-control" name="college" value="{{ student.college or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">班级</label>
+                        <input type="text" class="form-control" name="class" value="{{ student.class or '' }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn blue">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteStudentModal{{ student.student_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('delete_student', student_id=student.student_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除学生 <strong>{{ student.name }}({{ student.student_id }})</strong> 吗？</p>
+                    <p class="text-muted small">此操作将同时删除该学生的课程和宿舍信息。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn danger">删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

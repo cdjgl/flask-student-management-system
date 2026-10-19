@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}宿舍管理 - 学生管理系统{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+    <div class="page-header">
+        <h2>
+            <i class="bi bi-house me-2"></i>宿舍管理
+        </h2>
+        <div>
+            <button class="btn blue" data-bs-toggle="modal" data-bs-target="#addDormModal">
+                <i class="bi bi-plus-lg me-1"></i>添加宿舍
+            </button>
+            <a href="{{ url_for('export_dormitories', college=selected_college, class=selected_class, building=selected_building, room=selected_room, bed=selected_bed) }}" class="btn green">
+                <i class="bi bi-file-earmark-excel me-1"></i>导出Excel
+            </a>
+        </div>
+    </div>
+
+    {% if request.args.get('error') %}
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ request.args.get('error') }}
+    </div>
+    {% endif %}
+
+    <div class="filter-bar">
+        <form method="GET">
+            <div class="filter-item">
+                <select class="form-select" name="college">
+                    <option value="">全部学院</option>
+                    {% for college in colleges %}
+                    <option value="{{ college }}" {% if selected_college == college %}selected{% endif %}>{{ college }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="class">
+                    <option value="">全部班级</option>
+                    {% for class_name in classes %}
+                    <option value="{{ class_name }}" {% if selected_class == class_name %}selected{% endif %}>{{ class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="building">
+                    <option value="">全部宿舍楼</option>
+                    {% for building in buildings %}
+                    <option value="{{ building }}" {% if selected_building == building %}selected{% endif %}>{{ building }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="room">
+                    <option value="">全部房间</option>
+                    {% for room in rooms %}
+                    <option value="{{ room }}" {% if selected_room == room %}selected{% endif %}>{{ room }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="bed">
+                    <option value="">全部床位</option>
+                    {% for bed in beds %}
+                    <option value="{{ bed }}" {% if selected_bed == bed %}selected{% endif %}>{{ bed }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <button type="submit" class="btn blue">
+                    <i class="bi bi-search me-1"></i>搜索
+                </button>
+                <a href="{{ url_for('dormitories') }}" class="btn gray">
+                    <i class="bi bi-x-lg me-1"></i>重置
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>二级学院</th>
+                            <th>班级</th>
+                            <th>宿舍楼</th>
+                            <th>房间号</th>
+                            <th>床位号</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if dormitories %}
+                            {% for dorm in dormitories %}
+                            <tr>
+                                <td class="fw-medium">{{ dorm.student_id }}</td>
+                                <td>{{ dorm.name }}</td>
+                                <td>{{ dorm.college or '-' }}</td>
+                                <td>{{ dorm.class or '-' }}</td>
+                                <td><span class="badge primary">{{ dorm.building }}</span></td>
+                                <td>{{ dorm.room }}</td>
+                                <td>{{ dorm.bed }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editDormModal{{ dorm.student_id }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteDormModal{{ dorm.student_id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+                                暂无宿舍数据
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-header border-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">共 {{ total }} 条记录</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                            <a class="page-link" href="?page={{ current_page - 1 }}&college={{ selected_college }}&class={{ selected_class }}&building={{ selected_building }}&room={{ selected_room }}&bed={{ selected_bed }}">上一页</a>
+                        </li>
+                        {% for p in pages %}
+                        {% if p == '...' %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item {% if p == current_page %}active{% endif %}">
+                            <a class="page-link" href="?page={{ p }}&college={{ selected_college }}&class={{ selected_class }}&building={{ selected_building }}&room={{ selected_room }}&bed={{ selected_bed }}">{{ p }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                            <a class="page-link" href="?page={{ current_page + 1 }}&college={{ selected_college }}&class={{ selected_class }}&building={{ selected_building }}&room={{ selected_room }}&bed={{ selected_bed }}">下一页</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addDormModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_dormitory') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-house-add me-2"></i>添加宿舍</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">学号 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="student_id" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">二级学院</label>
+                            <input type="text" class="form-control" name="college">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">班级</label>
+                            <input type="text" class="form-control" name="class">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">宿舍楼 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="building" required placeholder="如：1号楼">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">房间号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="room" required placeholder="如：101">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">床位号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="bed" required placeholder="如：1号床">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn blue">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for dorm in dormitories %}
+<div class="modal fade" id="editDormModal{{ dorm.student_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('edit_dormitory', student_id=dorm.student_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>编辑宿舍</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">学号</label>
+                        <input type="text" class="form-control" value="{{ dorm.student_id }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" value="{{ dorm.name }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">二级学院</label>
+                            <input type="text" class="form-control" name="college" value="{{ dorm.college or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">班级</label>
+                            <input type="text" class="form-control" name="class" value="{{ dorm.class or '' }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">宿舍楼 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="building" value="{{ dorm.building }}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">房间号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="room" value="{{ dorm.room }}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">床位号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="bed" value="{{ dorm.bed }}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn blue">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteDormModal{{ dorm.student_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('delete_dormitory', student_id=dorm.student_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除 <strong>{{ dorm.name }}</strong> 的宿舍信息吗？</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn danger">删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

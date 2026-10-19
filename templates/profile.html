@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h5 class="m-0 font-weight-bold text-primary">👤 个人中心</h5>
+        </div>
+        
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header">个人信息</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">用户名</label>
+                                <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">角色</label>
+                                <input type="text" class="form-control" value="{{ '管理员' if user.role == 'admin' else '普通用户' }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">注册时间</label>
+                                <input type="text" class="form-control" value="{{ user.register_time }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">最后登录时间</label>
+                                <input type="text" class="form-control" value="{{ user.last_login_time }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header">修改密码</div>
+                        <div class="card-body">
+                            <form method="post" action="{{ url_for('change_password') }}">
+                                <div class="mb-3">
+                                    <label for="old_password" class="form-label">原密码 <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="old_password" name="old_password" required>
+                                    {% if old_password_error %}
+                                    <small class="text-danger">{{ old_password_error }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">新密码 <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password" required minlength="6">
+                                    <small class="text-muted">至少6位</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">确认密码 <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                    {% if password_mismatch %}
+                                    <small class="text-danger">{{ password_mismatch }}</small>
+                                    {% endif %}
+                                </div>
+                                <button type="submit" class="btn btn-primary">修改密码</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header">编辑个人信息</div>
+                        <div class="card-body">
+                            <form method="post" action="{{ url_for('edit_profile') }}">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">邮箱</label>
+                                    <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
+                                    {% if email_error %}
+                                    <small class="text-danger">{{ email_error }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contact" class="form-label">联系方式</label>
+                                    <input type="text" class="form-control" id="contact" name="contact" value="{{ user.contact }}">
+                                </div>
+                                <button type="submit" class="btn btn-primary">保存修改</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

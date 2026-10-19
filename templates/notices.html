@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h5 class="m-0 font-weight-bold text-primary">📢 系统通知公告</h5>
+            {% if session.get('username') == 'admin' %}
+            <a href="{{ url_for('add_notice') }}" class="btn btn-primary">
+                <i class="bi bi-plus"></i> 发布公告
+            </a>
+            {% endif %}
+        </div>
+        
+        <div class="card-body">
+            <form method="get" action="{{ url_for('notices') }}" class="row mb-4">
+                <div class="col-md-2">
+                    <select name="priority" class="form-control">
+                        <option value="">全部优先级</option>
+                        <option value="normal" {% if priority == 'normal' %}selected{% endif %}>普通</option>
+                        <option value="important" {% if priority == 'important' %}selected{% endif %}>重要</option>
+                        <option value="urgent" {% if priority == 'urgent' %}selected{% endif %}>紧急</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date }}" placeholder="开始日期">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date }}" placeholder="结束日期">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" name="keyword" class="form-control" value="{{ keyword }}" placeholder="标题关键词">
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-1"><i class="bi bi-search"></i> 搜索</button>
+                    <a href="{{ url_for('notices') }}" class="btn btn-secondary btn-sm flex-1"><i class="bi bi-arrow-counterclockwise"></i> 重置</a>
+                </div>
+            </form>
+            
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>公告 ID</th>
+                            <th>标题</th>
+                            <th>优先级</th>
+                            <th>发布人</th>
+                            <th>发布时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for notice in notices %}
+                        <tr>
+                            <td>{{ notice.notice_id }}</td>
+                            <td>
+                                <a href="{{ url_for('view_notice', notice_id=notice.notice_id) }}" 
+                                   class="text-decoration-none {% if notice.priority == 'urgent' %}text-danger font-weight-bold{% elif notice.priority == 'important' %}text-warning font-weight-bold{% else %}text-primary{% endif %}">
+                                    {{ notice.title }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if notice.priority == 'urgent' %}
+                                    <span class="badge bg-danger">紧急</span>
+                                {% elif notice.priority == 'important' %}
+                                    <span class="badge bg-warning">重要</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">普通</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ notice.publisher }}</td>
+                            <td>{{ notice.publish_time }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('view_notice', notice_id=notice.notice_id) }}" 
+                                       class="btn btn-info btn-sm" title="查看">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if session.get('username') == 'admin' %}
+                                    <a href="{{ url_for('edit_notice', notice_id=notice.notice_id) }}" 
+                                       class="btn btn-warning btn-sm" title="编辑">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-danger btn-sm" 
+                                            title="删除"
+                                            onclick="confirmNoticeDelete('{{ notice.notice_id }}', '{{ notice.title }}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if page > 1 %}
+                    <li class="page-item"><a class="page-link" href="?page=1">首页</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page-1 }}">上一页</a></li>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages+1) %}
+                        {% if p == page %}
+                        <li class="page-item active"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+                        {% elif p >= page-2 and p <= page+2 %}
+                        <li class="page-item"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+                        {% elif p == 1 or p == total_pages %}
+                        <li class="page-item"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+                        {% elif p == page-3 or p == page+3 %}
+                        <li class="page-item"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page+1 }}">下一页</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">末页</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmNoticeDelete(noticeId, title) {
+    if (confirm(`确定要删除公告「${title}」吗？`)) {
+        window.location.href = `/notices/delete/${noticeId}`;
+    }
+}
+</script>
+{% endblock %}

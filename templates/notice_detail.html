@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h5 class="m-0 font-weight-bold text-primary">公告详情</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h2 class="{% if notice.priority == 'urgent' %}text-danger{% elif notice.priority == 'important' %}text-warning{% else %}text-primary{% endif %}">
+                    {{ notice.title }}
+                </h2>
+                <div class="mt-2">
+                    <span class="badge {% if notice.priority == 'urgent' %}badge-danger{% elif notice.priority == 'important' %}badge-warning{% else %}badge-secondary{% endif %}">
+                        {% if notice.priority == 'urgent' %}紧急{% elif notice.priority == 'important' %}重要{% else %}普通{% endif %}
+                    </span>
+                    <span class="ml-3 text-gray-600">发布人：{{ notice.publisher }}</span>
+                    <span class="ml-3 text-gray-600">发布时间：{{ notice.publish_time }}</span>
+                </div>
+            </div>
+            
+            <div class="border-top pt-4">
+                <p class="notice-content">{{ notice.content }}</p>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('notices') }}" class="btn btn-secondary">返回列表</a>
+                {% if session.get('username') == 'admin' %}
+                <a href="{{ url_for('edit_notice', notice_id=notice.notice_id) }}" class="btn btn-warning ml-2">编辑公告</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

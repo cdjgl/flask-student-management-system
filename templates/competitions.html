@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}竞赛管理 - 学生管理系统{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+    <div class="page-header">
+        <h2>
+            <i class="bi bi-trophy me-2"></i>竞赛管理
+        </h2>
+        <div>
+            <button class="btn blue" data-bs-toggle="modal" data-bs-target="#addCompModal">
+                <i class="bi bi-plus-lg me-1"></i>添加竞赛
+            </button>
+            <a href="{{ url_for('export_competitions', college=selected_college, class=selected_class, award_level=selected_level, award_year=selected_year) }}" class="btn green">
+                <i class="bi bi-file-earmark-excel me-1"></i>导出Excel
+            </a>
+        </div>
+    </div>
+
+    {% if request.args.get('error') %}
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ request.args.get('error') }}
+    </div>
+    {% endif %}
+
+    <div class="filter-bar">
+        <form method="GET">
+            <div class="filter-item">
+                <select class="form-select" name="college">
+                    <option value="">全部学院</option>
+                    {% for college in colleges %}
+                    <option value="{{ college }}" {% if selected_college == college %}selected{% endif %}>{{ college }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="class">
+                    <option value="">全部班级</option>
+                    {% for class_name in classes %}
+                    <option value="{{ class_name }}" {% if selected_class == class_name %}selected{% endif %}>{{ class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="award_level">
+                    <option value="">全部级别</option>
+                    {% for level in levels %}
+                    <option value="{{ level }}" {% if selected_level == level %}selected{% endif %}>{{ level }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="award_year">
+                    <option value="">全部年份</option>
+                    {% for year in years %}
+                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <button type="submit" class="btn blue">
+                    <i class="bi bi-search me-1"></i>搜索
+                </button>
+                <a href="{{ url_for('competitions') }}" class="btn gray">
+                    <i class="bi bi-x-lg me-1"></i>重置
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>证书编号</th>
+                            <th>竞赛名称</th>
+                            <th>获奖级别</th>
+                            <th>获奖年份</th>
+                            <th>二级学院</th>
+                            <th>班级</th>
+                            <th>获奖同学</th>
+                            <th>联系方式</th>
+                            <th>指导老师</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if competitions %}
+                            {% for comp in competitions %}
+                            <tr>
+                                <td class="fw-medium">{{ comp.certificate_id }}</td>
+                                <td>{{ comp.competition_name }}</td>
+                                <td>
+                                    {% if comp.award_level == '国家级' %}
+                                    <span class="badge danger">{{ comp.award_level }}</span>
+                                    {% elif comp.award_level == '省级' %}
+                                    <span class="badge primary">{{ comp.award_level }}</span>
+                                    {% else %}
+                                    <span class="badge success">{{ comp.award_level }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ comp.award_year }}</td>
+                                <td>{{ comp.college or '-' }}</td>
+                                <td>{{ comp.class or '-' }}</td>
+                                <td>{{ comp.award_students }}</td>
+                                <td>{{ comp.contact or '-' }}</td>
+                                <td>{{ comp.advisor or '-' }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editCompModal{{ comp.certificate_id }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteCompModal{{ comp.certificate_id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="10" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+                                暂无竞赛数据
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-header border-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">共 {{ total }} 条记录</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                            <a class="page-link" href="?page={{ current_page - 1 }}&college={{ selected_college }}&class={{ selected_class }}&award_level={{ selected_level }}&award_year={{ selected_year }}">上一页</a>
+                        </li>
+                        {% for p in pages %}
+                        {% if p == '...' %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item {% if p == current_page %}active{% endif %}">
+                            <a class="page-link" href="?page={{ p }}&college={{ selected_college }}&class={{ selected_class }}&award_level={{ selected_level }}&award_year={{ selected_year }}">{{ p }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                            <a class="page-link" href="?page={{ current_page + 1 }}&college={{ selected_college }}&class={{ selected_class }}&award_level={{ selected_level }}&award_year={{ selected_year }}">下一页</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addCompModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_competition') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-trophy me-2"></i>添加竞赛</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">证书编号 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="certificate_id" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">竞赛名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="competition_name" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">获奖级别</label>
+                            <select class="form-select" name="award_level">
+                                <option value="国家级">国家级</option>
+                                <option value="省级">省级</option>
+                                <option value="校级" selected>校级</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">获奖年份 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="award_year" required placeholder="如：2024">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">二级学院</label>
+                            <input type="text" class="form-control" name="college">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">班级</label>
+                            <input type="text" class="form-control" name="class">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">获奖同学 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="award_students" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">联系方式</label>
+                            <input type="text" class="form-control" name="contact">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">指导老师</label>
+                            <input type="text" class="form-control" name="advisor">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn blue">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for comp in competitions %}
+<div class="modal fade" id="editCompModal{{ comp.certificate_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('edit_competition', certificate_id=comp.certificate_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>编辑竞赛</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">证书编号</label>
+                        <input type="text" class="form-control" value="{{ comp.certificate_id }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">竞赛名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="competition_name" value="{{ comp.competition_name }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">获奖级别</label>
+                            <select class="form-select" name="award_level">
+                                <option value="国家级" {% if comp.award_level == '国家级' %}selected{% endif %}>国家级</option>
+                                <option value="省级" {% if comp.award_level == '省级' %}selected{% endif %}>省级</option>
+                                <option value="校级" {% if comp.award_level == '校级' %}selected{% endif %}>校级</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">获奖年份 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="award_year" value="{{ comp.award_year }}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">二级学院</label>
+                            <input type="text" class="form-control" name="college" value="{{ comp.college or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">班级</label>
+                            <input type="text" class="form-control" name="class" value="{{ comp.class or '' }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">获奖同学 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="award_students" value="{{ comp.award_students }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">联系方式</label>
+                            <input type="text" class="form-control" name="contact" value="{{ comp.contact or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">指导老师</label>
+                            <input type="text" class="form-control" name="advisor" value="{{ comp.advisor or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn blue">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteCompModal{{ comp.certificate_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('delete_competition', certificate_id=comp.certificate_id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除竞赛 <strong>{{ comp.competition_name }}</strong> 的记录吗？</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn gray" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn danger">删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

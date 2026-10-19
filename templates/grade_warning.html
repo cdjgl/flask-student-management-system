@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}成绩预警管理 - 学生管理系统{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+    <div class="page-header">
+        <h2>
+            <i class="bi bi-exclamation-triangle"></i> 成绩预警管理
+        </h2>
+        <div>
+            <a href="{{ url_for('export_grade_warning', warning_type=selected_warning_type, college=selected_college, class_name=selected_class, status=selected_status) }}" class="btn green">
+                <i class="bi bi-file-earmark-excel me-1"></i>导出报表
+            </a>
+        </div>
+    </div>
+
+    {% if request.args.get('error') %}
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ request.args.get('error') }}
+    </div>
+    {% endif %}
+
+    <div class="filter-bar">
+        <form method="GET">
+            <div class="filter-item">
+                <select class="form-select" name="warning_type">
+                    <option value="">全部类型</option>
+                    <option value="fail" {% if selected_warning_type == 'fail' %}selected{% endif %}>挂科预警</option>
+                    <option value="low_gpa" {% if selected_warning_type == 'low_gpa' %}selected{% endif %}>低绩点预警</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="college">
+                    <option value="">全部学院</option>
+                    {% for college in colleges %}
+                    <option value="{{ college }}" {% if selected_college == college %}selected{% endif %}>{{ college }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="class">
+                    <option value="">全部班级</option>
+                    {% for class_name in classes %}
+                    <option value="{{ class_name }}" {% if selected_class == class_name %}selected{% endif %}>{{ class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <select class="form-select" name="status">
+                    <option value="">全部状态</option>
+                    <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>未处理</option>
+                    <option value="contacted" {% if selected_status == 'contacted' %}selected{% endif %}>已沟通</option>
+                    <option value="resolved" {% if selected_status == 'resolved' %}selected{% endif %}>已解决</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <button type="submit" class="btn blue">
+                    <i class="bi bi-search me-1"></i>搜索
+                </button>
+                <a href="{{ url_for('grade_warning') }}" class="btn gray">
+                    <i class="bi bi-x-lg me-1"></i>重置
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {% if warnings %}
+    <form method="POST" action="{{ url_for('batch_resolve_warnings') }}">
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select_all" onclick="toggleSelectAll()"></th>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>二级学院</th>
+                                <th>班级</th>
+                                <th>预警类型</th>
+                                <th>预警原因</th>
+                                <th>成绩</th>
+                                <th>处理状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for warning in warnings %}
+                            <tr>
+                                <td><input type="checkbox" name="warning_ids" value="{{ warning.warning_id }}"></td>
+                                <td class="fw-medium">{{ warning.student_id }}</td>
+                                <td>{{ warning.name }}</td>
+                                <td>{{ warning.college }}</td>
+                                <td><span class="badge primary">{{ warning.class_name }}</span></td>
+                                <td>
+                                    {% if warning.warning_type == 'fail' %}
+                                    <span class="badge type-fail">挂科预警</span>
+                                    {% else %}
+                                    <span class="badge type-gpa">低绩点预警</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ warning.reason }}</td>
+                                <td>{{ warning.score }}</td>
+                                <td>
+                                    <select class="status-select" data-warning-id="{{ warning.warning_id }}">
+                                        <option value="pending" {% if warning.status == 'pending' %}selected{% endif %}>未处理</option>
+                                        <option value="contacted" {% if warning.status == 'contacted' %}selected{% endif %}>已沟通</option>
+                                        <option value="resolved" {% if warning.status == 'resolved' %}selected{% endif %}>已解决</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('student_courses', student_id=warning.student_id) }}" class="btn btn-sm btn-outline-primary" title="查看课程">
+                                        <i class="bi bi-book-open"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-header border-top">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <small class="text-muted">共 {{ total }} 条记录</small>
+                        <button type="submit" class="btn btn-sm blue" id="batch_resolve_btn">
+                            <i class="bi bi-check-square me-1"></i>批量标记已解决
+                        </button>
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                                <a class="page-link" href="?page={{ current_page - 1 }}&warning_type={{ selected_warning_type }}&college={{ selected_college }}&class={{ selected_class }}&status={{ selected_status }}">上一页</a>
+                            </li>
+                            {% for page in pages %}
+                            {% if page == '...' %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item {% if page == current_page %}active{% endif %}">
+                                <a class="page-link" href="?page={{ page }}&warning_type={{ selected_warning_type }}&college={{ selected_college }}&class={{ selected_class }}&status={{ selected_status }}">{{ page }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                                <a class="page-link" href="?page={{ current_page + 1 }}&warning_type={{ selected_warning_type }}&college={{ selected_college }}&class={{ selected_class }}&status={{ selected_status }}">下一页</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </form>
+    {% else %}
+    <div class="card">
+        <div class="card-body">
+            <div class="text-center py-10">
+                <i class="bi bi-check-circle fs-3 mb-3 text-theme-success"></i>
+                <p class="text-muted">暂无预警记录，所有学生学业状况良好！</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleSelectAll() {
+    var selectAll = document.getElementById('select_all');
+    var checkboxes = document.querySelectorAll('input[name="warning_ids"]');
+    checkboxes.forEach(function(checkbox) {
+        checkbox.checked = selectAll.checked;
+    });
+}
+
+document.querySelectorAll('.status-select').forEach(function(select) {
+    select.addEventListener('change', function() {
+        var warningId = this.dataset.warningId;
+        var status = this.value;
+        fetch('{{ url_for('update_warning_status') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'warning_id=' + warningId + '&status=' + status
+        }).then(function(response) {
+            if (response.ok) {
+                console.log('Status updated');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
