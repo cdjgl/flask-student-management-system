@@ -98,7 +98,7 @@ python scripts/import_json_to_mysql.py --export-seed
 │   ├── schema.sql               # 建库建表脚本
 │   └── seed.sql                 # 脱敏演示数据
 ├── scripts/
-│   └── import_json_to_mysql.py  # 旧版 JSON 数据迁移（含脱敏）
+│   └── import_json_to_mysql.py  # 旧版 JSON 数据迁移
 ├── templates/                   # Jinja2 页面模板
 ├── static/                      # CSS / JS 静态资源
 ├── .env.example                 # 环境变量模板
